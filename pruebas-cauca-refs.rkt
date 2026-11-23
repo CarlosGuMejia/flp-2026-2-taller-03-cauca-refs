@@ -372,3 +372,82 @@ end") "num"))
 (eopl:printf "~%==========================================~%")
 (eopl:printf "  pruebas adicionales fallidas: ~s~%" fallidas-adicionales)
 (eopl:printf "==========================================~%")
+
+;;; ==========================================================
+;;; Pruebas adicionales del chequeador de tipos
+;;; (Jesus David Lopez Diaz 2611029-3743)
+;;; ==========================================================
+
+;; david-bien-tipado : string x string -> void
+;; El programa se acepta y su tipo, escrito con tipo->texto, es el esperado.
+(define david-bien-tipado
+  (lambda (texto esperado)
+    (check-equal? (tipo-de texto) esperado texto)))
+
+;; david-mal-tipado : string x string -> void
+;; El programa se rechaza con un eopl:error cuyo mensaje contiene el texto esperado.
+(define david-mal-tipado
+  (lambda (texto mensaje)
+    (check-true (contiene? (mensaje-de texto) mensaje) texto)))
+
+(define suite-david-chequeador
+  (test-suite
+   "Parte 3 (adicional): chequeador de tipos"
+
+   (test-case "programas bien tipados"
+     (david-bien-tipado "let x = 5 in +(x, 1) end" "num")
+     (david-bien-tipado "proc (x: num, y: num) >(x, y) end" "(num * num -> bool)")
+     (david-bien-tipado "proc (x: num) proc (y: num) +(x, y) end end" "(num -> (num -> num))")
+     (david-bien-tipado "let r = newref(0) in begin setref(r, 5); deref(r) end end" "num")
+     (david-bien-tipado "letrec num fact (n: num) = if ==(n, 0) then 1 else *(n, apply fact (-(n, 1))) end in apply fact (5) end" "num")
+     (david-bien-tipado "letrec bool par (n: num) = if ==(n, 0) then true else apply impar (sub1(n)) end bool impar (n: num) = if ==(n, 0) then false else apply par (sub1(n)) end in apply par (10) end" "bool")
+     (david-bien-tipado "let a = newref(1) b = newref(2) in swap(a, b) end" "num")
+     (david-bien-tipado "let c = newref(0) inc = proc (r: refto(num)) setref(r, +(deref(r), 1)) end in applyref inc (c) end" "num")
+     (david-bien-tipado "case n of 1 => true of 2 => false otherwise => true end" "bool")
+     (david-bien-tipado "newref(newref(true))" "refto(refto(bool))"))
+
+   (test-case "mensaje 1: condicion del if no booleana"
+     (david-mal-tipado "if 1 then 2 else 3 end"
+                       "La condicion del if debe ser bool, se encontro num"))
+   (test-case "mensaje 2: ramas del if distintas"
+     (david-mal-tipado "if true then 1 else false end"
+                       "Las ramas del if deben coincidir: num vs bool"))
+   (test-case "mensaje 3: aplicar algo que no es procedimiento"
+     (david-mal-tipado "apply 5 (1)"
+                       "Se intento aplicar un valor de tipo num"))
+   (test-case "mensaje 4: aridad incorrecta"
+     (david-mal-tipado "let f = proc (x: num) x end in apply f (1, 2) end"
+                       "El procedimiento espera 1 argumentos y recibio 2"))
+   (test-case "mensaje 5: argumento de tipo equivocado"
+     (david-mal-tipado "let f = proc (x: num) x end in apply f (true) end"
+                       "El argumento 1 debe ser num, se encontro bool"))
+   (test-case "mensaje 6: deref sobre algo que no es referencia"
+     (david-mal-tipado "deref(5)"
+                       "deref espera refto(t), se encontro num"))
+   (test-case "mensaje 7: setref con tipos incompatibles"
+     (david-mal-tipado "let r = newref(1) in setref(r, true) end"
+                       "La celda guarda num y se intento escribir bool"))
+   (test-case "mensaje 8: cuerpo de letrec distinto al declarado"
+     (david-mal-tipado "letrec num f (x: num) = true in 1 end"
+                       "El procedimiento f declara num y su cuerpo da bool"))
+   (test-case "mensaje 9: identificador no declarado"
+     (david-mal-tipado "z" "Variable no declarada: z"))
+
+   (test-case "otros rechazos: primitivas, case, swap y applyref"
+     (david-mal-tipado "+(1, true)"
+                       "La primitiva + espera num en el argumento 2 y se encontro bool")
+     (david-mal-tipado "case true of 1 => 1 otherwise => 0 end"
+                       "El control del case debe ser num, se encontro bool")
+     (david-mal-tipado "let a = newref(1) b = newref(true) in swap(a, b) end"
+                       "swap espera referencias al mismo tipo")
+     (david-mal-tipado "let f = proc (r: refto(num)) deref(r) end in let x = 3 in applyref f (x) end end"
+                       "El argumento 1 debe ser refto(num), se encontro num")
+     (david-mal-tipado "let f = proc (r: num) r end in let x = 3 in applyref f (x) end end"
+                       "El argumento 1 de applyref debe ser una referencia, se encontro num"))))
+
+(define fallidas-chequeador
+  (run-tests suite-david-chequeador))
+
+(eopl:printf "~%==========================================~%")
+(eopl:printf "  pruebas adicionales chequeador fallidas: ~s~%" fallidas-chequeador)
+(eopl:printf "==========================================~%")

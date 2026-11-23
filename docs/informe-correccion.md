@@ -15,7 +15,7 @@ de Programación — Universidad del Valle, Sede Tuluá.
 | Nombre | Código | Correo institucional |
 |--------|--------|----------------------|
 | Juan Eduardo Calderon Jaramillo | 2611001-3743 | juan.eduardo.calderon@correounivalle.edu.co |
-| {{Nombre 2}} | {{Código 2}} | {{correo2@correounivalle.edu.co}} |
+| Jesus David Lopez Diaz          | 2611029-3743 | jesus.david.lopez@correounivalle.edu.co     |
 
 ---
 
@@ -253,9 +253,83 @@ incluido el caso $\ell_1 = \ell_2$ y el valor retornado.
 
 ---
 
-### 2.3 Corrección de `{{nombre-funcion-3}}`
+### 2.3 Solidez del chequeador (enunciado 5.3)
 
-{{Repetir la misma estructura.}}
+#### Fragmento y reglas de tipo
+
+Se trabaja con el fragmento sin referencias: literales numéricos, booleanos, variables, primitivas, `if`, `let`, `proc` y `apply`. Las reglas de `case` y de `letrec` siguen el mismo esquema, y lo que cambia con las referencias se discute al final de esta sección. Cada regla corresponde a una cláusula de `type-of`.
+
+$$\dfrac{}{\Gamma \vdash n : \text{num}}\ (\text{T-Num})
+\qquad
+\dfrac{}{\Gamma \vdash \texttt{true} : \text{bool}}\ (\text{T-True})
+\qquad
+\dfrac{}{\Gamma \vdash \texttt{false} : \text{bool}}\ (\text{T-False})$$
+
+$$\dfrac{\Gamma(x) = t}{\Gamma \vdash x : t}\ (\text{T-Var})
+\qquad
+\dfrac{\Gamma \vdash e_i : t_i\ (1 \le i \le k) \qquad \text{tipo-de-primitiva}(p;\, t_1,\dots,t_k) = r}
+{\Gamma \vdash p(e_1,\dots,e_k) : r}\ (\text{T-Prim})$$
+
+$$\dfrac{\Gamma \vdash e_0 : \text{bool} \qquad \Gamma \vdash e_1 : t \qquad \Gamma \vdash e_2 : t}
+{\Gamma \vdash \texttt{if}\ e_0\ \texttt{then}\ e_1\ \texttt{else}\ e_2\ \texttt{end} : t}\ (\text{T-If})$$
+
+$$\dfrac{\Gamma \vdash e_i : t_i\ (1 \le i \le n) \qquad \Gamma[x_1{:}t_1,\dots,x_n{:}t_n] \vdash b : t}
+{\Gamma \vdash \texttt{let}\ x_1 = e_1 \dots x_n = e_n\ \texttt{in}\ b\ \texttt{end} : t}\ (\text{T-Let})$$
+
+$$\dfrac{\Gamma[x_1{:}t_1,\dots,x_n{:}t_n] \vdash b : r}
+{\Gamma \vdash \texttt{proc}(x_1{:}t_1,\dots,x_n{:}t_n)\ b\ \texttt{end} : (t_1 * \dots * t_n \to r)}\ (\text{T-Proc})$$
+
+$$\dfrac{\Gamma \vdash e_0 : (t_1 * \dots * t_n \to r) \qquad \Gamma \vdash e_i : t_i\ (1 \le i \le n)}
+{\Gamma \vdash \texttt{apply}\ e_0\ (e_1,\dots,e_n) : r}\ (\text{T-App})$$
+
+#### Tipo de un valor y concordancia entre ambientes
+
+Se define cuándo un valor $v$ tiene un tipo $t$, escrito $\vdash v : t$:
+
+- $\vdash n : \text{num}$ para todo número, entero o flotante.
+- $\vdash \texttt{\#t} : \text{bool}$ y $\vdash \texttt{\#f} : \text{bool}$.
+- $\vdash \langle x_1,\dots,x_n;\ b;\ \rho_d \rangle : (t_1 * \dots * t_n \to r)$ si y solo si existe un ambiente de tipos $\Gamma_d$ con $\rho_d \models \Gamma_d$ y $\Gamma_d[x_1{:}t_1,\dots,x_n{:}t_n] \vdash b : r$.
+
+**Concordancia.** Un ambiente de valores $\rho$ concuerda con un ambiente de tipos $\Gamma$, escrito $\rho \models \Gamma$, si para todo $x \in \operatorname{dom}(\Gamma)$ se cumple que $x \in \operatorname{dom}(\rho)$ y $\vdash \rho(x) : \Gamma(x)$, donde ambas búsquedas toman la ligadura más reciente de $x$. El ambiente inicial cumple $\rho_0 \models \Gamma_0$, porque $n, m, p, q, r$ valen $10, 3, 7, 2, 5$ y `tenv-inicial` los declara `num`.
+
+**Lema 1 (extensión).** Si $\rho \models \Gamma$ y $\vdash v_i : t_i$ para $1 \le i \le n$, entonces $\rho[x_1{=}v_1,\dots,x_n{=}v_n] \models \Gamma[x_1{:}t_1,\dots,x_n{:}t_n]$.
+
+*Demostración.* Para un identificador $y$ que aparezca entre los $x_i$, la ligadura más reciente en ambos ambientes es la del último $x_i$ igual a $y$, y por hipótesis $\vdash v_i : t_i$. Para cualquier otro $y \in \operatorname{dom}(\Gamma)$, ninguna ligadura nueva lo tapa en ninguno de los dos ambientes y se usa $\rho \models \Gamma$. $\blacksquare$
+
+#### Enunciado de la solidez
+
+**Teorema (solidez, sin referencias).** Si $\Gamma \vdash e : t$, $\rho \models \Gamma$ y $\text{value-of}(e, \rho)$ retorna el valor $v$, entonces $\vdash v : t$.
+
+El teorema no afirma que la ejecución nunca falle. `num` agrupa enteros y flotantes, y por eso un programa bien tipado todavía puede fallar en una primitiva: una división por cero, o `mcd` y `mcm` con un flotante. Lo que sí se demuestra es que los errores que el chequeador existe para evitar no ocurren: una variable no ligada, una condición no booleana, aplicar algo que no es procedimiento o pasar el número equivocado de argumentos.
+
+#### Demostración de los casos `if` y `apply`
+
+La inducción es sobre la altura $h$ de la derivación de $\text{value-of}(e, \rho) = v$, razonando sobre la última regla de tipo usada. No basta inducir sobre la derivación de tipos: en `apply`, el cuerpo $b$ del procedimiento no es una subexpresión de la expresión que se evalúa, así que su derivación de tipos no es una parte de la derivación de $e$. En cambio, la evaluación del cuerpo sí es una sub-evaluación de la de $e$, y su altura es menor que $h$.
+
+- **Caso `var`.** $e = x$ y $\Gamma(x) = t$. Como $\rho \models \Gamma$, el valor $\rho(x)$ existe y $\vdash \rho(x) : t$. Esto también muestra que `apply-env` no levanta el error de variable no ligada.
+- **Caso `proc`.** $e = \texttt{proc}(\bar{x}{:}\bar{t})\ b\ \texttt{end}$ con $\Gamma[\bar{x}{:}\bar{t}] \vdash b : r$ y $t = (\bar{t} \to r)$. La evaluación no mira el cuerpo y retorna $\langle \bar{x};\ b;\ \rho \rangle$. Tomando $\Gamma_d = \Gamma$ se cumple $\rho \models \Gamma_d$ y $\Gamma_d[\bar{x}{:}\bar{t}] \vdash b : r$, luego $\vdash \langle \bar{x};\ b;\ \rho \rangle : (\bar{t} \to r)$.
+- **Caso `if`.** La última regla es T-If con $\Gamma \vdash e_0 : \text{bool}$, $\Gamma \vdash e_1 : t$ y $\Gamma \vdash e_2 : t$.
+  1. La evaluación del `if` evalúa $e_0$ en $\rho$ con una sub-evaluación de altura menor que $h$. Por hipótesis de inducción, el valor $v_0$ cumple $\vdash v_0 : \text{bool}$.
+  2. Los únicos valores de tipo $\text{bool}$ son `#t` y `#f`, así que `(boolean? test-value)` es verdadero y no se levanta el error de condición no booleana.
+  3. Si $v_0 = \texttt{\#t}$, se evalúa $e_1$ en $\rho$ con altura menor que $h$. La hipótesis de inducción, con $\Gamma \vdash e_1 : t$, da $\vdash v : t$. Si $v_0 = \texttt{\#f}$ el argumento es igual con $e_2$.
+- **Caso `apply`.** La última regla es T-App con $\Gamma \vdash e_0 : (t_1 * \dots * t_n \to r)$ y $\Gamma \vdash e_i : t_i$ para $1 \le i \le n$, y $t = r$.
+  1. Se evalúa $e_0$ en $\rho$. Por hipótesis de inducción, su valor $v_0$ cumple $\vdash v_0 : (t_1 * \dots * t_n \to r)$. Los números y los booleanos no tienen tipo de procedimiento, así que $v_0 = \langle x_1,\dots,x_m;\ b;\ \rho_d \rangle$. Por la definición de tipo de una clausura, el cuerpo se tipa bajo $\Gamma_d[x_1{:}t_1,\dots,x_n{:}t_n]$, así que $m = n$. Por tanto `(procval? proc)` es verdadero y `app-exp` no levanta el error de operador que no es procedimiento.
+  2. Se evalúan los operandos en $\rho$. Por hipótesis de inducción, $\vdash v_i : t_i$ para cada $i$.
+  3. Como $m = n$, la verificación de cantidad de argumentos de `apply-procedure` pasa.
+  4. `apply-procedure` evalúa el cuerpo en $\rho_d[\bar{x} = \bar{v}]$. Por la definición de clausura existe $\Gamma_d$ con $\rho_d \models \Gamma_d$ y $\Gamma_d[\bar{x}{:}\bar{t}] \vdash b : r$, y por el Lema 1, $\rho_d[\bar{x} = \bar{v}] \models \Gamma_d[\bar{x}{:}\bar{t}]$. La evaluación del cuerpo tiene altura menor que $h$, y por hipótesis de inducción su valor cumple $\vdash v : r$.
+
+El paso 4 depende de que el cuerpo se evalúe en el ambiente de la clausura y no en el de la llamada $\rho$. Con ámbito dinámico fallaría: un procedimiento tipado con `factor : num` podría llamarse donde `factor` es un `bool`, y el valor resultante no tendría el tipo $r$. $\blacksquare$
+
+#### Qué se rompe con las referencias
+
+Con `newref`, `deref`, `setref`, `swap` y `applyref`, el enunciado del teorema deja de tener sentido, por cuatro razones:
+
+1. **El resultado de evaluar ya no depende solo de $\rho$.** La evaluación pasa a tener la forma $\text{value-of}(e, \rho, \sigma) = (v, \sigma')$, con un almacén $\sigma$ que asocia cada celda con su contenido. Una referencia es una celda $\ell$, y decir que $\vdash \ell : \text{refto}(t)$ exige saber qué guarda la celda.
+2. **Hace falta una tipificación del almacén $\Sigma$.** $\Sigma$ asigna a cada celda $\ell$ el tipo de lo que guarda. El tipo de un valor pasa a escribirse $\Sigma \vdash v : t$, y para una referencia se define $\Sigma \vdash \ell : \text{refto}(t)$ si y solo si $\Sigma(\ell) = t$. La concordancia $\sigma \models \Sigma$ pide que el contenido de cada celda tenga el tipo que $\Sigma$ declara.
+3. **El almacén crece y cambia.** `newref` agrega una celda, así que el teorema debe decir que existe $\Sigma' \supseteq \Sigma$ con $\sigma' \models \Sigma'$ y $\Sigma' \vdash v : t$. Por eso se necesita un lema de debilitamiento: si $\Sigma \vdash v : t$ y $\Sigma \subseteq \Sigma'$, entonces $\Sigma' \vdash v : t$.
+4. **La escritura debe conservar los tipos.** `setref` y `swap` modifican $\sigma$. El tipo de las celdas no cambia solo si el valor escrito tiene el tipo que la celda declara, y esa es exactamente la comprobación del mensaje «`La celda guarda t1 y se intento escribir t2`». Sin ella, una celda de tipo $\text{refto}(\text{num})$ podría pasar a guardar un booleano y un `deref` posterior ya no devolvería un `num`.
+
+Además, `applyref` introduce *aliasing*: dos nombres pueden apuntar a la misma celda, y una escritura por uno se observa por el otro. La solidez no se pierde por eso, porque ambos nombres tienen el mismo tipo $\text{refto}(t)$ y la escritura conserva ese tipo, pero el enunciado y la demostración ya no se pueden formular sin $\sigma$ ni $\Sigma$.
 
 ---
 
