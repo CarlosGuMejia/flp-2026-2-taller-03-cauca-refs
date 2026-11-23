@@ -1,5 +1,5 @@
 #lang eopl
-;Autores: Nombre1 Codigo1, Nombre2 Codigo2
+;Autores: Jesus David Lopez Diaz 2611029-3743, Nombre2 Codigo2
 
 #|
   Pruebas del interpretador con referencias y del chequeador de tipos.
