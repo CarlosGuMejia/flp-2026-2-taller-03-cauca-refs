@@ -88,6 +88,13 @@ parte de su contrato y se demuestran abajo:
 5. **(Rango)** `deref` y `setref!` sobre $\ell = \texttt{(a-ref } k\texttt{)}$ con
    $k \notin [0, |\sigma|)$ levantan `eopl:error`.
 
+Las cuatro condiciones del enunciado son (2), (3), (4) y (5): toda
+referencia entregada por `newref!` apunta a una celda existente (2), el
+almacén solo crece por `newref!` (3), `setref!` modifica exactamente una
+celda (4) y `deref` fuera de rango levanta error (5). La condición (1) es
+la que hace precisas las demás: las posiciones válidas son un rango sin
+huecos.   
+
 **Estado inicial.** `initialize-store!` hace
 $\sigma := \langle\rangle$ y $E := \emptyset$. Las dos partes del
 invariante se cumplen por vacuidad, así que $\text{Inv}(\langle\rangle, \emptyset)$.
@@ -242,6 +249,29 @@ llama a `newref!`.
 **Conclusión:** la cláusula de `swap-exp` satisface la especificación,
 incluido el caso $\ell_1 = \ell_2$ y el valor retornado.
 
+**Diagrama de la implementación.** `swap-exp` lee los dos contenidos antes de
+escribir, por eso no pierde el valor original de la primera celda:
+
+```mermaid
+flowchart LR
+  subgraph antes["σ (antes)"]
+    a1["ℓ1 ↦ v1"]
+    a2["ℓ2 ↦ v2"]
+  end
+  subgraph lecturas["Lecturas previas"]
+    x["x = σ(ℓ1) = v1"]
+    y["y = σ(ℓ2) = v2"]
+  end
+  subgraph despues["σ' (después)"]
+    b1["ℓ1 ↦ v2"]
+    b2["ℓ2 ↦ v1"]
+  end
+  a1 --> x
+  a2 --> y
+  y -->|"setref!(ℓ1, y)"| b1
+  x -->|"setref!(ℓ2, x)"| b2
+```
+
 ---
 
 ### 2.3 Solidez del chequeador (enunciado 5.3)
@@ -301,7 +331,7 @@ La inducción es sobre la altura $h$ de la derivación de $\text{value-of}(e, \r
 - **Caso `proc`.** $e = \texttt{proc}(\bar{x}{:}\bar{t})\ b\ \texttt{end}$ con $\Gamma[\bar{x}{:}\bar{t}] \vdash b : r$ y $t = (\bar{t} \to r)$. La evaluación no mira el cuerpo y retorna $\langle \bar{x};\ b;\ \rho \rangle$. Tomando $\Gamma_d = \Gamma$ se cumple $\rho \models \Gamma_d$ y $\Gamma_d[\bar{x}{:}\bar{t}] \vdash b : r$, luego $\vdash \langle \bar{x};\ b;\ \rho \rangle : (\bar{t} \to r)$.
 - **Caso `if`.** La última regla es T-If con $\Gamma \vdash e_0 : \text{bool}$, $\Gamma \vdash e_1 : t$ y $\Gamma \vdash e_2 : t$.
   1. La evaluación del `if` evalúa $e_0$ en $\rho$ con una sub-evaluación de altura menor que $h$. Por hipótesis de inducción, el valor $v_0$ cumple $\vdash v_0 : \text{bool}$.
-  2. Los únicos valores de tipo $\text{bool}$ son `#t` y `#f`, así que `(boolean? test-value)` es verdadero y no se levanta el error de condición no booleana.
+  2. Los únicos valores de tipo $\text{bool}$ son `#t` y `#f`, así que `(boolean? cond-val)` es verdadero y no se levanta el error de condición no booleana.
   3. Si $v_0 = \texttt{\#t}$, se evalúa $e_1$ en $\rho$ con altura menor que $h$. La hipótesis de inducción, con $\Gamma \vdash e_1 : t$, da $\vdash v : t$. Si $v_0 = \texttt{\#f}$ el argumento es igual con $e_2$.
 - **Caso `apply`.** La última regla es T-App con $\Gamma \vdash e_0 : (t_1 * \dots * t_n \to r)$ y $\Gamma \vdash e_i : t_i$ para $1 \le i \le n$, y $t = r$.
   1. Se evalúa $e_0$ en $\rho$. Por hipótesis de inducción, su valor $v_0$ cumple $\vdash v_0 : (t_1 * \dots * t_n \to r)$. Los números y los booleanos no tienen tipo de procedimiento, así que $v_0 = \langle x_1,\dots,x_m;\ b;\ \rho_d \rangle$. Por la definición de tipo de una clausura, el cuerpo se tipa bajo $\Gamma_d[x_1{:}t_1,\dots,x_n{:}t_n]$, así que $m = n$. Por tanto `(procval? proc)` es verdadero y `app-exp` no levanta el error de operador que no es procedimiento.
