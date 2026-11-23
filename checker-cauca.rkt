@@ -1,5 +1,5 @@
 #lang eopl
-;Autores: Nombre1 Codigo1, Nombre2 Codigo2
+;Autores: Carlos Humberto Gutierrez Mejia 2059817-3743, Juan Eduardo Calderon Jaramillo 2611001-3743, Jesus David Lopez Diaz 2611029-3743
 
 #|
   Taller 3 — Cauca con referencias y tipos.

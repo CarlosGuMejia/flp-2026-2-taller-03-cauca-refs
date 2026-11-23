@@ -65,16 +65,14 @@ fachadas, nunca un módulo de `src/` por separado.
 
 `src/sintaxis.rkt` lo requieren los dos lados: la gramática con las
 anotaciones de tipo se escribe una sola vez y el intérprete y el chequeador
-recorren el mismo árbol. Lo que trae ahora es una producción por no
-terminal, lo mínimo para que todo cargue; la gramática completa la escribe el
-grupo.
+recorren el mismo árbol. Parte de la gramática del Taller 2 y agrega las
+expresiones del almacén (`newref`, `deref`, `setref`, `swap`, `begin`), el
+paso por referencia (`applyref`) y los cuatro tipos (`num`, `bool`,
+`refto`, procedimiento).
 
-Las funciones llegan como huecos que levantan `eopl:error` con «Sin
-implementar», y encima de cada una están su contrato y su propósito. Los
-datatypes que hacen falta —`referencia`, `ambiente`, `procval` y `tenv`—
-están nombrados en el comentario de cabecera de su módulo. Las plantillas de
-`docs/` se llenan en el mismo archivo, reemplazando los marcadores `{{...}}`
-y sin quitar las secciones.
+Cada función lleva encima su nombre, su contrato y su propósito. Los
+informes están en `docs/informe-ast.md` (Parte 4) y
+`docs/informe-correccion.md` (Parte 5).
 
 ## Cómo se corre
 

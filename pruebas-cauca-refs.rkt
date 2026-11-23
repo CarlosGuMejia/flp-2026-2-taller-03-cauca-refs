@@ -1,5 +1,5 @@
 #lang eopl
-;Autores: Jesus David Lopez Diaz 2611029-3743, Nombre2 Codigo2
+;Autores: Carlos Humberto Gutierrez Mejia 2059817-3743, Juan Eduardo Calderon Jaramillo 2611001-3743, Jesus David Lopez Diaz 2611029-3743
 
 #|
   Pruebas del interpretador con referencias y del chequeador de tipos.
