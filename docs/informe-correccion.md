@@ -1,11 +1,4 @@
-# Informe de corrección — {{Nombre del taller / entrega}}
-
-> **Plantilla de entrega.** Copie este archivo a
-> `docs/informe-correccion.md` dentro del repositorio del grupo y
-> reemplace los marcadores `{{...}}` con su contenido.
-> **No elimine las secciones obligatorias.** No se aceptan PDF, DOCX
-> ni imágenes insertadas: todo el documento debe ser Markdown, las
-> fórmulas en LaTeX (`$...$` / `$$...$$`) y los diagramas en Mermaid.
+# Informe de corrección — Taller 3: Memoria y disciplina
 
 **Curso:** Fundamentos de Interpretación y Compilación de Lenguajes
 de Programación — Universidad del Valle, Sede Tuluá.
@@ -14,6 +7,7 @@ de Programación — Universidad del Valle, Sede Tuluá.
 
 | Nombre | Código | Correo institucional |
 |--------|--------|----------------------|
+| Carlos Humberto Gutierrez Mejia | 2059817-3743 | carlos.humberto.gutierrez@correounivalle.edu.co |
 | Juan Eduardo Calderon Jaramillo | 2611001-3743 | juan.eduardo.calderon@correounivalle.edu.co |
 | Jesus David Lopez Diaz          | 2611029-3743 | jesus.david.lopez@correounivalle.edu.co     |
 
@@ -64,9 +58,6 @@ La corrección se argumenta demostrando:
 ---
 
 ## 2. Funciones analizadas
-
-> Complete **una subsección por cada función pedida en el enunciado**.
-> Copie la plantilla de subsección tantas veces como sea necesario.
 
 ### 2.1 Corrección de las operaciones del almacén (enunciado 5.1)
 
@@ -333,48 +324,19 @@ Además, `applyref` introduce *aliasing*: dos nombres pueden apuntar a la misma 
 
 ---
 
-## 3. Propiedades adicionales (si aplica)
+## 3. Propiedades adicionales
 
-Incluya en esta sección cualquier propiedad adicional que el
-enunciado exija demostrar, por ejemplo:
-
-- **Shadowing de ambientes** (`apply-env`): la ligadura más reciente
-  tiene prioridad sobre las anteriores.
-- **Secuencialidad de `let*`**: cada ligadura se evalúa en un
-  ambiente que incluye las anteriores.
-- **Equivalencia semántica** entre dos implementaciones (por ejemplo,
-  representación basada en listas vs. basada en procedimientos de un
-  mismo TAD).
-- **Invariante del almacén**: si $\sigma' = \text{setref!}(\sigma, \ell, v)$,
-  entonces $\sigma'(\ell) = v$ y $\sigma'(\ell') = \sigma(\ell')$ para todo
-  $\ell' \neq \ell$. La operación que reserva una celda es la única que
-  cambia la longitud del almacén.
-- **Invariante de la transacción**: sea $\sigma_0$ el almacén al entrar a
-  un bloque `atomic` y $\sigma$ el almacén en el momento de abortar. Si
-  el registro de la transacción guarda, para cada celda $\ell$ escrita
-  dentro del bloque, el valor $\sigma_0(\ell)$ que tenía al entrar, y la
-  longitud $|\sigma_0|$, entonces revertir devuelve exactamente
-  $\sigma_0$: las celdas registradas recuperan su valor, las que no se
-  escribieron nunca cambiaron, y las creadas adentro (posiciones
-  $\geq |\sigma_0|$) desaparecen. Demostrar por inducción sobre el
-  número de escrituras del bloque, y tratar aparte el caso de una
-  transacción hija que confirmó antes de que la padre abortara.
-- **Paso por referencia**: el parámetro queda ligado a la misma
-  referencia del argumento, de modo que una escritura dentro del
-  procedimiento se observa fuera. Contrastar con el paso por valor
-  sobre el mismo programa.
-- **Solidez de un chequeador de tipos**: si $\Gamma \vdash e : t$ y el
-  ambiente de valores $\rho$ concuerda con el ambiente de tipos
-  $\Gamma$, entonces $\text{value-of}(e, \rho)$ es un valor de tipo
-  $t$. Precisar primero qué significa la concordancia entre $\rho$ y
-  $\Gamma$.
-
-Cada propiedad debe enunciarse formalmente y demostrarse con el
-mismo rigor que las funciones anteriores.
+El enunciado pide tres demostraciones: el invariante del almacén (sección
+2.1), la corrección de `swap-exp` (sección 2.2) y la solidez del
+chequeador (sección 2.3). Las tres están desarrolladas arriba; no se
+demuestran propiedades adicionales.
 
 ---
 
 ## 4. Referencias
 
 - Friedman, D. P., & Wand, M. *Essentials of Programming Languages*,
-  3.ª ed., MIT Press, 2008. Secciones {{…}}.
+  3.ª ed., MIT Press, 2008. Capítulo 4 (secciones 4.2 y 4.3) y capítulo 7
+  (secciones 7.1 a 7.3).
+- Pierce, B. C. *Types and Programming Languages*, MIT Press, 2002.
+  Capítulos 8 y 13.
